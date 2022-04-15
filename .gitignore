@@ -2,5 +2,8 @@
 /tournament-example/
 sdk_key/
 /stats.txt
-/test.json
-/tmp.sql
+/.idea/
+/.ipynb_checkpoints/
+/tools/.ipynb_checkpoints/
+/sql-scripts
+/test/
