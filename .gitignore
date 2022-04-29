@@ -7,3 +7,5 @@ sdk_key/
 /tools/.ipynb_checkpoints/
 /sql-scripts
 /test/
+/egf-db/
+/__pycache__

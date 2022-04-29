@@ -5,41 +5,6 @@ import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# Load sdk-key
-os.chdir('..')
-cert = os.path.abspath(os.curdir + '/sdk_key/igo-stats-firebase-adminsdk-vwmdk-b32d0db07c.json')
-
-# Load local tables
-local_db_folder = os.curdir + '/db-samples'
-tables = os.listdir(local_db_folder)
-
-print('Current tables to load:\n')
-for tb in tables:
-    print(tb, end=', ')
-print('\n')
-
-# Connect to firebase
-cred = credentials.Certificate(cert)
-default_app = firebase_admin.initialize_app(cred)
-
-# Select firestore database
-fs_db = firestore.client()
-
-# Default header for players table
-players_header = ['id', 'last_name', 'first_name', 'birth_date', 'town_id', 'rating', 'last_game', 'last_update']
-
-# Load 'players' table
-players_table = pd.read_csv(local_db_folder + '/' + tables[0], header=None)
-players_table.columns = players_header
-
-# Sample data
-players_table_test = players_table[:5]
-
-# Different way to transform table to firestore-nosql-documents
-# json_string = players_table_test.to_json(orient='records')
-
-json_dict = players_table_test.to_dict(orient='records')
-
 
 class UploadDataToFirestore:
     """
@@ -169,3 +134,43 @@ class UploadDataToFirestore:
     # with custom document IDS
     def set(self, item):
         return fs_db.collection(self.collection_name).document(str(item['id'])).set(item, merge=True)
+
+
+# For tests
+if __name__ == "__main__":
+    # Load sdk-key
+    cert = os.path.abspath(os.curdir + '/sdk_key/igo-stats-firebase-adminsdk-vwmdk-b32d0db07c.json')
+
+    # Load local tables
+    local_db_folder = os.path.abspath(os.curdir) + '/db-samples'
+    tables = os.listdir(local_db_folder)
+
+    print('Current tables to load:\n')
+    for tb in tables:
+        print(tb, end=' ')
+    print('\n')
+
+    # Connect to firebase
+    cred = credentials.Certificate(cert)
+    default_app = firebase_admin.initialize_app(cred)
+
+    # Select firestore database
+    fs_db = firestore.client()
+
+    # Default header for players table
+    players_header = ['id', 'last_name', 'first_name', 'birth_date', 'town_id', 'rating', 'last_game', 'last_update']
+
+    # Load 'players' table
+    players_table = pd.read_csv(local_db_folder + '/' + tables[0], header=None)
+    players_table.columns = players_header
+
+    # Sample data
+    players_table_test = players_table[:5]
+
+    # Different way to transform table to firestore-nosql-documents
+    # json_string = players_table_test.to_json(orient='records')
+
+    json_dict = players_table_test.to_dict(orient='records')
+
+    upd = UploadDataToFirestore(json_dict, 'add', 'test')
+    upd.upload()
