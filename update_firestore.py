@@ -8,35 +8,22 @@ from firebase_admin import credentials, firestore
 
 class UploadDataToFirestore:
     """
-     This class is using for upload data to Firestore.
-     It supports only-json like objects:
-     1) JSON-string (just python string, which can be formatted as JSON)
-     2) List of dicts / dict
-     3) JSON-file path
-     UploadDataToFirestore supports these methods of upload:
-     1) 'set'
-        'set' is using to add documents with custom id. Defaultly this method takes 'id' field in dict.
-     2) 'add'
-        'add' adds document without id (document name). So firestore will set id authomatically.
+    This class is using for upload data to Firestore.
+    It supports only-json like objects:
+        1) JSON-string (just python string, which can be formatted as JSON)
+        2) List of dicts / dict
+        3) JSON-file path
+    UploadDataToFirestore supports these methods of upload:
+        1) 'set'
+        'set' is using to add documents with custom id. By default, this method takes 'id' field in dict.
+        2) 'add'
+        'add' adds document without id (document name). So firestore will set id automatically.
 
-     To upload something firstly you need to create object:
-         some_name = UploadDataToFirestore()
-     and specify some values like that:
-         some_name.json_data = some_string_or_list
-         some_name.method = some_method
-         some_name.collection_name = some_collection_name
-     or give these variables initializing object:
-         some_name = UploadDataToFirestore(some_string_or_list, some_method, some_collection_name)
-
-     then just use:
-         some_name.upload()
+    To upload something firstly you need to create object, secondary set all required fields, then use upload() method.
     """
-
-    def __init__(self, json_data=None, method=None, collection_name=None) -> None:
-        # Get class running time
-        self.start = timeit.default_timer()
-
+    def __init__(self, database, json_data=None, method=None, collection_name=None) -> None:
         # Initialize instance variables
+        self.db = database
         self.json_data = json_data
         self.method = method
         self.collection_name = collection_name
@@ -49,7 +36,7 @@ class UploadDataToFirestore:
     # Firestore upload method setter method
     @method.setter
     def method(self, val):
-        if type(val) is None:
+        if val is None:
             print(f'Please, specify method of upload')
         elif val == 'set' or val == 'add':
             self._method = val
@@ -64,33 +51,30 @@ class UploadDataToFirestore:
     # Collection name setter method
     @collection_name.setter
     def collection_name(self, val):
-        if type(val) is None:
+        if val is None:
             print(f'Please, specify name of collection to upload to')
         elif type(val) == str:
             self._collection_name = val
         else:
             print(f'Wrong type for firestore collection name')
 
-    # Get Json file path property
+    # Get JSON-data property
     @property
     def json_data(self):
         return self._json_data
 
-    # Set and process Json file path property
+    # Set and process JSON-data or path to JSON
     @json_data.setter
     def json_data(self, val):
-        if type(val) is None:
+        if val is None:
             print(f'Please, specify .json file path or give a list of dicts')
         elif type(val) == str:
             try:
-                # Opening JSON file
-                f = open(val, 'r')
+                # Open JSON file
+                with open(val, 'r') as f:
+                    # Returns JSON object as a dictionary
+                    data = json.load(f)
 
-                # returns JSON object as a dictionary
-                data = json.load(f)
-
-                # make sure to close file
-                f.close()
                 self._json_data = data
             except Exception as e1:
                 try:
@@ -104,9 +88,11 @@ class UploadDataToFirestore:
         else:
             print(f'Wrong data type')
 
-    # Main class method to populate firestore
-    # with the said data
+    # Main class method to populate firestore with the said data
     def upload(self):
+        # Get upload running time
+        start = timeit.default_timer()
+
         if self.json_data and self.method and type(self.json_data) == list:
             # Iterating through the json list
             for idx, item in enumerate(self.json_data):
@@ -121,22 +107,20 @@ class UploadDataToFirestore:
                     # All the program statements
                     stop = timeit.default_timer()
                     print('**** SUCCESS UPLOAD ****')
-                    print("Time taken: " + str(stop - self.start))
+                    print("Time taken: " + str(stop - start))
 
     # Collection -add- method
-    # Adds all data under a collection
-    # with firebase firestore auto generated IDS
+    # Adds all data under a collection with firebase firestore auto generated IDS
     def add(self, item):
-        return fs_db.collection(self.collection_name).add(item)
+        return self.db.collection(self.collection_name).add(item)
 
     # Collection document -set- method
-    # Adds all data under a collection
-    # with custom document IDS
+    # Adds all data under a collection with custom document IDS
     def set(self, item):
-        return fs_db.collection(self.collection_name).document(str(item['id'])).set(item, merge=True)
+        return self.db.collection(self.collection_name).document(str(item['id'])).set(item, merge=True)
 
 
-# For tests
+# *** FOR TESTS ***
 if __name__ == "__main__":
     # Load sdk-key
     cert = os.path.abspath(os.curdir + '/sdk_key/igo-stats-firebase-adminsdk-vwmdk-b32d0db07c.json')
@@ -153,9 +137,7 @@ if __name__ == "__main__":
     # Connect to firebase
     cred = credentials.Certificate(cert)
     default_app = firebase_admin.initialize_app(cred)
-
-    # Select firestore database
-    fs_db = firestore.client()
+    db = firestore.client()
 
     # Default header for players table
     players_header = ['id', 'last_name', 'first_name', 'birth_date', 'town_id', 'rating', 'last_game', 'last_update']

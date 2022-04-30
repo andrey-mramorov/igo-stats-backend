@@ -1,0 +1,6 @@
+{
+    "players": "csv_samples/players.csv",
+    "tournaments": "csv_samples/tournaments.csv",
+    "link_pt": "csv_samples/players-tournaments.csv",
+    "towns": "csv_samples/towns.csv"
+}
