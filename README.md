@@ -5,6 +5,7 @@ Then this objects are loaded to firestore database.
 ## Modules & folders description
 ### 1.
 Folder *./tools* includes notebooks which can help to debug main python code
+- one file builds SQL database the tables using SQL-Alchemy
 
 ### 2.
 *update_firesore.py* is module which contains class for downloading dicts or JSON-files to Firestore
